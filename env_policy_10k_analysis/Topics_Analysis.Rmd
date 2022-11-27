@@ -1,0 +1,117 @@
+---
+title: "Topic-Analysis"
+author: "Siqi Ma"
+date: "10/19/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data
+```{r}
+library(foreign)
+library(car)
+library(ggplot2)
+library(plm)
+library(stargazer)
+topic <- read.csv('toptopic_freq_quarter.csv')
+topic <- topic[, 2:3]
+small_topic <- topic[1:20,]
+```
+
+## Plot frequency
+
+```{r}
+bar <- table(small_topic$Count)
+barplot(small_topic$Count,
+main = "Graph 1: Top 20 topic words",
+ylab = "Count",
+names.arg = small_topic$word,
+las = 2)
+```
+
+## Plot top word changes
+
+```{r}
+top <- read.csv('toptopic_freq_wide.csv')
+ggplot(data = top, aes(x=Year, y=Rel)) + geom_line(aes(colour=word))
+```
+```{r}
+top <- read.csv('toptopic_freq_quarter_wide.csv')
+top$`Frequency` <- top$Each_Count/top$Count
+colnames(top) <- c("Year-Quarter", 'Word', 'Count','Each_Count', 'Frequency')
+top_1 <- top[1:264,]
+top_2 <- top[265:528,]
+ggplot(data = top_1, aes(x=`Year-Quarter`, y=Frequency)) +ylim(0, 0.125)+ geom_line(aes(colour=Word))
+ggplot(data = top_2, aes(x=`Year-Quarter`, y=Frequency)) + ylim(0, 0.125)+ geom_line(aes(colour=Word))
+```
+
+
+
+## Running a tiny regression on topic change over years
+```{r}
+word <- top[(top$Word == "regulations" | top$Word =="laws" | top$Word =="energy"
+            | top$Word == "costs" |top$Word =="changes"),]
+ggplot(data = word, aes(x=`Year-Quarter`, y=Each_Count)) + ylim(0, 5)+ labs(title = "Graph 2: Topic Word Counts", x = "Number of Quarter Since 2016", y = "Count of Topic Words") + geom_line(aes(colour=Word))
+```
+
+
+## Stemming word match group by time
+```{r}
+library(dplyr)
+stem <- read.csv('clean.csv')
+stem <- stem[, 2:5]
+stem <- stem[stem$ISR_Number != 0,]
+stem %>% 
+  group_by(Time) %>% 
+  summarize(mean = mean(Count), # calculates the mean
+            stand.dev = sd(Count),   # calculates the standard deviation
+            med = median(Count),
+            q1 = quantile(Count)[2],
+            q3 = quantile(Count)[4],
+            n = n()) %>%     # calculates the total number of observations
+  ungroup()
+
+stem$Time[which(stem$Time == '201601')] <- 1
+stem$Time[which(stem$Time == '201602')] <- 2
+stem$Time[which(stem$Time == '201603')] <- 3
+stem$Time[which(stem$Time == '201604')] <- 4
+stem$Time[which(stem$Time == '201701')] <- 5
+stem$Time[which(stem$Time == '201702')] <- 6
+stem$Time[which(stem$Time == '201703')] <- 7
+stem$Time[which(stem$Time == '201704')] <- 8
+stem$Time[which(stem$Time == '201801')] <- 9
+stem$Time[which(stem$Time == '201802')] <- 10
+stem$Time[which(stem$Time == '201803')] <- 11
+stem$Time[which(stem$Time == '201804')] <- 12
+stem$Time[which(stem$Time == '201901')] <- 13
+stem$Time[which(stem$Time == '201902')] <- 14
+stem$Time[which(stem$Time == '201903')] <- 15
+stem$Time[which(stem$Time == '201904')] <- 16
+stem$Time[which(stem$Time == '202001')] <- 17
+stem$Time[which(stem$Time == '202002')] <- 18
+stem$Time[which(stem$Time == '202003')] <- 19
+stem$Time[which(stem$Time == '202004')] <- 20
+stem$Time[which(stem$Time == '202101')] <- 21
+stem$Time[which(stem$Time == '202102')] <- 22
+stem$Time[which(stem$Time == '202103')] <- 23
+stem$Time[which(stem$Time == '202104')] <- 24
+
+```
+
+## Stem word match group by company
+
+```{r}
+stem %>% 
+  group_by(Industry) %>% 
+  summarize(mean = mean(Count), # calculates the mean
+            stand.dev = sd(Count),   # calculates the standard deviation
+            med = median(Count),
+            q1 = quantile(Count)[2],
+            q3 = quantile(Count)[4],
+            n = n()) %>%     # calculates the total number of observations
+  ungroup()
+```
+
